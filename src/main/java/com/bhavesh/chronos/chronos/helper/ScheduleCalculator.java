@@ -5,19 +5,26 @@ import com.bhavesh.chronos.chronos.entities.JobExecution;
 import com.bhavesh.chronos.chronos.entities.JobLog;
 import com.bhavesh.chronos.chronos.entities.repo.JobLogRepository;
 import com.bhavesh.chronos.chronos.enums.RecurringSchedule;
-import lombok.extern.log4j.Log4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import javax.mail.*;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
 import java.time.LocalDateTime;
-import java.util.logging.Logger;
+import java.util.Properties;
 
 
 @Component
 public class ScheduleCalculator {
 
     private final JobLogRepository logRepository;
+
+
+    @Value("${job.email.username}")
+    private String username;
+    @Value("${job.email.password}")
+    private String password;
 
     public ScheduleCalculator(JobLogRepository logRepository) {
         this.logRepository = logRepository;
@@ -34,31 +41,62 @@ public class ScheduleCalculator {
         };
     }
 
-    private void executeEmailViaPython(Job job, JobExecution execution) throws Exception {
+    public void executeEmail(Job job, JobExecution execution) {
 
-        ProcessBuilder pb = new ProcessBuilder(
-                "python",
-                "send_mail.py",
-                job.getToEmail(),
-                job.getSubject(),
-                job.getBody()
-        );
+        // JavaMail properties
+        Properties props = new Properties();
+        props.put("mail.smtp.auth", "true");
+        props.put("mail.smtp.starttls.enable", "true");
+        props.put("mail.smtp.host", "smtp.gmail.com"); // Replace with your SMTP server
+        props.put("mail.smtp.port", "465"); // Replace with your SMTP port
 
-        pb.redirectErrorStream(true);
-        Process process = pb.start();
+        // Debugging enabled
+        props.put("mail.debug", "true");
 
-        try (BufferedReader reader =
-                     new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+        // SSL configuration for port 465
+        props.put("mail.smtp.ssl.enable", "true");
 
-            String line;
-            while ((line = reader.readLine()) != null) {
-                log(execution, "PYTHON: " + line);
-            }
+        // Fetch username and password from environment variables
+
+
+        // Check for missing credentials
+        if (username == null || username.isEmpty() || password == null || password.isEmpty()) {
+            throw new IllegalStateException("Email credentials are missing or invalid. Ensure EMAIL_USERNAME and EMAIL_PASSWORD are set.");
         }
 
-        int exitCode = process.waitFor();
-        if (exitCode != 0) {
-            throw new RuntimeException("Email sending failed");
+        Session session = Session.getInstance(props, new javax.mail.Authenticator() {
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(username, password);
+            }
+        });
+
+        try {
+            // Create a default MimeMessage object
+            Message message = new MimeMessage(session);
+
+            // Set From: header field
+            message.setFrom(new InternetAddress(username));
+
+            // Set To: header field
+            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(job.getToEmail()));
+
+            // Set Subject: header field
+            message.setSubject(job.getSubject());
+
+            // Set the actual message
+            message.setText(job.getBody());
+
+            // Send message
+            log(execution, "Attempting to send email to: " + job.getToEmail());
+            Transport.send(message);
+            log(execution, "Email sent successfully to: " + job.getToEmail());
+        } catch (MessagingException e) {
+            log(execution, "Failed to send email: " + e.getMessage());
+            log(execution, "SMTP Host: " + props.getProperty("mail.smtp.host"));
+            log(execution, "SMTP Port: " + props.getProperty("mail.smtp.port"));
+            log(execution, "SMTP Auth: " + props.getProperty("mail.smtp.auth"));
+            log(execution, "SMTP StartTLS: " + props.getProperty("mail.smtp.starttls.enable"));
+            throw new RuntimeException("Email sending failed", e);
         }
     }
 

@@ -50,7 +50,6 @@ public class JobExecutionServiceImpl implements JobExecutionService {
             return;
         }
 
-        job.setStatus(JobStatus.RUNNING);
         jobRepository.save(job);
 
         executor.execute(() -> runJob(job));
@@ -70,7 +69,7 @@ public class JobExecutionServiceImpl implements JobExecutionService {
             log(execution, "Job started");
 
             if (JobType.EMAIL.equals(job.getJobType())) {
-                //executeEmailViaPython(job, execution);
+                scheduleCalculator.executeEmail(job, execution);
             } else {
                 throw new IllegalArgumentException("Unsupported job type");
             }

@@ -40,6 +40,9 @@ public class JobServiceImpl implements JobService {
         job.setJobType(request.getJobType());
         job.setScheduleType(request.getScheduleType());
         job.setMaxRetries(request.getMaxRetries());
+        job.setToEmail(request.getToEmail());
+        job.setSubject(request.getSubject());
+        job.setBody(request.getBody());
         job.setRetryCount(0);
         job.setStatus(JobStatus.ACTIVE);
 
