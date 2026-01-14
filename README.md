@@ -63,12 +63,9 @@ The Distributed Job Scheduling System is a robust and scalable backend solution 
    ```bash
    cd chronos
    ```
-3. Set up the database:
-   - Run the SQL scripts in `/infrastructure/db/migration` to create tables.
-   - Seed data using `/infrastructure/db/seed/R__seed_data.sql`.
 
-4. Configure environment variables:
-   - Set `EMAIL_USERNAME` and `EMAIL_PASSWORD` in your system.
+4. Configure :
+   - Set `EMAIL_USERNAME` and `EMAIL_PASSWORD` in application properties.
 
 5. Build and run the application:
    ```bash
