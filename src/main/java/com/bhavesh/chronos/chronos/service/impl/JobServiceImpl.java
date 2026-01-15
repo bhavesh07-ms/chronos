@@ -44,7 +44,7 @@ public class JobServiceImpl implements JobService {
         job.setSubject(request.getSubject());
         job.setBody(request.getBody());
         job.setRetryCount(0);
-        job.setStatus(JobStatus.ACTIVE);
+        job.setStatus(JobStatus.ACTIVE); //scheduler executes active status only
 
         if (request.getScheduleType() == ScheduleType.IMMEDIATE) {
             job.setNextRunAt(LocalDateTime.now());

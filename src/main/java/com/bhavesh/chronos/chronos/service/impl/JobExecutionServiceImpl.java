@@ -49,7 +49,7 @@ public class JobExecutionServiceImpl implements JobExecutionService {
         if (job.getStatus() != JobStatus.ACTIVE) {
             return;
         }
-
+        job.setStatus(JobStatus.RUNNING);
         jobRepository.save(job);
 
         executor.execute(() -> runJob(job));

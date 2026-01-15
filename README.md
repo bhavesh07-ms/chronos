@@ -92,6 +92,71 @@ The system is designed to handle an increasing number of tasks efficiently. It u
 ## Documentation
 For detailed API documentation, refer to the Postman collection and the `/HELP.md` file in the repository.
 
+## PostgreSQL Installation and Setup
+
+### Prerequisites
+- Install PostgreSQL on your system. You can download it from [PostgreSQL Official Website](https://www.postgresql.org/download/).
+
+### Configuration
+1. Open the `application.properties` file located in `src/main/resources`.
+2. Update the following properties:
+   ```ini
+   spring.datasource.url=jdbc:postgresql://localhost:5432/chronos_db
+   spring.datasource.username=postgres
+   spring.datasource.password=user
+   spring.datasource.driver-class-name=org.postgresql.Driver
+   spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
+   ```
+
+### Database Setup
+Run the following commands in the PostgreSQL terminal to set up the database and tables:
+
+1. Create the database:
+   ```sql
+   CREATE DATABASE chronos_db;
+   ```
+
+2. Switch to the database:
+   ```sql
+   \c chronos_db;
+   ```
+
+3. Create the `job` table:
+   ```sql
+   CREATE TABLE job (
+       id SERIAL PRIMARY KEY,
+       name VARCHAR(255) NOT NULL,
+       type VARCHAR(50) NOT NULL,
+       schedule TIMESTAMP,
+       status VARCHAR(50) NOT NULL
+   );
+   ```
+
+4. Create the `job_execution` table:
+   ```sql
+   CREATE TABLE job_execution (
+       id SERIAL PRIMARY KEY,
+       job_id INT REFERENCES job(id),
+       start_time TIMESTAMP,
+       end_time TIMESTAMP,
+       status VARCHAR(50) NOT NULL
+   );
+   ```
+
+5. Create the `job_logs` table:
+   ```sql
+   CREATE TABLE job_logs (
+       id SERIAL PRIMARY KEY,
+       job_execution_id INT REFERENCES job_execution(id),
+       log_message TEXT NOT NULL,
+       timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+   );
+   ```
+
+### Verify Setup
+- Ensure the database and tables are created successfully.
+- Use the credentials specified in the `application.properties` file to connect the application to the database.
+
 ---
 
 Feel free to reach out for any issues or suggestions regarding the system.
